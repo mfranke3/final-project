@@ -1,0 +1,214 @@
+---
+title: "Final Project"
+author: "Mike Frankel"
+date: "2/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries & data}
+
+library(tidyverse)
+library(ggplot2)
+library(tidyr)
+library(lubridate)
+library(janitor)
+library(scales)
+library(gghighlight)
+library(colorspace)
+library(devtools)
+library(colorblindr)
+library(stringr)
+library(maps)
+library(ggthemes)
+library(mapproj)
+library(reshape2)
+
+data <- read_csv("SummaryStarRating.csv")
+
+```
+
+
+```{r plot 1 - states map with average star rating}
+
+data1 <- data %>% group_by(StateName) %>% 
+  summarize(mean_rat = mean(PatientSurveyStarRating))
+
+# initial plot
+ggplot(data1, aes(StateName, mean_rat)) +
+  geom_col() +
+  coord_flip()
+
+us_states <- map_data("state")
+
+# p <- ggplot(data = us_states,
+#             aes(x = long, y = lat,
+#                 group = group, fill = region))
+# 
+# p + geom_polygon(color = "gray90", size = 0.1) + guides(fill = FALSE)
+# 
+# #3
+# p <- ggplot(data = us_states,
+#             mapping = aes(x = long, y = lat,
+#                           group = group, fill = region))
+# 
+# 
+# p + geom_polygon(color = "gray90", size = 0.1) +
+#     coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
+#     guides(fill = FALSE)
+
+us_states_star <- left_join(us_states, data1, by = c("region" = "StateName"))
+
+p <- ggplot(data = us_states_star,
+            aes(x = long, y = lat,
+                group = group, fill = mean_rat))
+
+# better plot
+state_map <- p + geom_polygon(color = "gray90", size = 0.1) +
+  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
+  labs(title = "Average Hospital Rating by State",
+       subtitle = "Scale: 1 to 5",
+       fill = "Average Star Rating",
+       caption = "Source: https://www.medicare.gov/hospitalcompare/search.html") +
+  theme_map()
+
+state_map
+
+```
+
+
+```{r plot 2 - comparing government rating to patient rating}
+data2 <- read_csv("StarRatingCompare.csv")
+
+data2filter <- data2 %>% select(FacilityID, State, HCAHPSQuestion, PatientSurveyStarRating) %>%
+  pivot_wider(names_from = HCAHPSQuestion, 
+              values_from = PatientSurveyStarRating)
+
+data2comp <- data2filter %>% group_by(State) %>% 
+  summarize(mean_rat = mean(`Summary star rating`), 
+            mean_rec = mean(`Recommend hospital - star rating`))
+
+data2comp <- data2comp %>%
+  pivot_longer(starts_with("mean"), 
+               names_to = "Question", 
+               values_to = "Rating")
+
+mean_compare_plot <- ggplot(data2comp, aes(State, Rating)) +
+  geom_line(aes(group = State), color = "gray40") +
+  geom_point(aes(color = Question)) +
+  coord_flip() +
+  labs(title = "Comparison of Mean State Hospital Star Ratings by Patients and CMS",
+       subtitle = "Scale: 1 to 5",
+       x = "", y = "Star Rating",
+       fill = "Rater",
+       caption = "Source: https://www.medicare.gov/hospitalcompare/search.html") +
+  scale_color_discrete(name = "Rater",
+                       breaks = c("mean_rat", "mean_rec"),
+                       labels = c("CMS", "Patient")) +
+  theme_minimal()
+
+mean_compare_plot
+```
+
+
+```{r plot 3 - correlation matrix of components of overall rating & overall rating}
+
+data3 <- read_csv("ScatterFile.csv")
+
+data3filter <- data3 %>% select(`Facility ID`, State, `HCAHPS Question`, 
+                                `Patient Survey Star Rating`) %>%
+  pivot_wider(names_from = 'HCAHPS Question',
+              values_from = 'Patient Survey Star Rating')
+
+data3comp <- data3filter %>% group_by(State) %>% 
+  summarize(`Nurse communication` = mean(`Nurse communication - star rating`), 
+            `Doctor communication` = mean(`Doctor communication - star rating`),
+            `Staff responsiveness` = mean(`Staff responsiveness - star rating`),
+            `Medicine communication` = mean(`Communication about medicines - star rating`),
+            `Discharge info` = mean(`Discharge information - star rating`),
+            `Care transition` = mean(`Care transition - star rating`),
+            `Cleanliness` = mean(`Cleanliness - star rating`),
+            `Quietness` = mean(`Quietness - star rating`),
+            `Overall hospital rating` = mean(`Overall hospital rating - star rating`),
+            `Recommend hospital` = mean(`Recommend hospital - star rating`),
+            `Summary rating` = mean(`Summary star rating`))
+
+# plot1 - scatterplot
+ggplot(data3comp, aes(x = `Nurse communication`, y = `Summary rating`)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  coord_fixed()
+
+# plot2 - correlation matrix heatmap from http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+cordata <- data3comp[,c(2,3,4,5,6,7,8,9,12)]
+cormat <- round(cor(cordata),2)
+melted_cormat <- melt(cormat)
+
+ggplot(melted_cormat, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile()
+
+# Get lower triangle of the correlation matrix
+  get_lower_tri<-function(cormat){
+    cormat[upper.tri(cormat)] <- NA
+    return(cormat)
+  }
+  # Get upper triangle of the correlation matrix
+  get_upper_tri <- function(cormat){
+    cormat[lower.tri(cormat)]<- NA
+    return(cormat)
+  }
+upper_tri <- get_upper_tri(cormat)
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+
+corplot <- ggplot(data = melted_cormat, aes(Var2, Var1, fill = value)) +
+ geom_tile(color = "white") +
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+   midpoint = .5, limit = c(0,1), space = "Lab", 
+   name="Pearson\nCorrelation") +
+ theme_minimal() + 
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 12, hjust = 1))+
+ coord_fixed() +
+  geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+ theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                title.position = "top", title.hjust = 0.5)) 
+  
+corplot
+
+# reorder_cormat <- function(cormat){
+# # Use correlation between variables as distance
+# dd <- as.dist((1-cormat)/2)
+# hc <- hclust(dd)
+# cormat <-cormat[hc$order, hc$order]
+# }
+# 
+# # Reorder the correlation matrix
+# cormat <- reorder_cormat(cormat)
+# upper_tri <- get_upper_tri(cormat)
+# # Melt the correlation matrix
+# melted_cormat <- melt(upper_tri, na.rm = TRUE)
+# # Create a ggheatmap
+# ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value))+
+#  geom_tile(color = "white")+
+#  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+#    midpoint = .5, limit = c(0,1), space = "Lab", 
+#     name="Pearson\nCorrelation") +
+#   theme_minimal()+ # minimal theme
+#  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+#     size = 12, hjust = 1))+
+#  coord_fixed()
+# ggheatmap
+```
