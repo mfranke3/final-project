@@ -77,6 +77,8 @@ state_map <- p + geom_polygon(color = "gray90", size = 0.1) +
 
 state_map
 
+#Jim: Dude awesome use of the map data to make a map! I love the color scheme. It's very well communicated and easy to interpret. I'm honestly surpised how long ranked New York is. I've been trying to fool around to make some maps in my free time to get the practice, and having the opportunity to view yours is so helpful. One suggestion (and honestly I'm not sure how to do it) but thinking back to class this week how Daniel made the reaction tables, I wonder if it would be possible to make this plot reactive that you could apply the each state's individual rating on top of it in a white color. 
+
 ```
 
 
@@ -111,6 +113,8 @@ mean_compare_plot <- ggplot(data2comp, aes(State, Rating)) +
   theme_minimal()
 
 mean_compare_plot
+
+#Jim: Really nice job on this! I think these types of plots are so cool. Again, I've had trouble trying to create these with my own data, so seeing how you did it is extremely helpful. What is especially helpful to me is to see how you did the initial leg work to complete this plot y creating the data2filter and data2comp objects. Special shout out to successful use of pivot_wider. That one still confuses the hell out me. Great job!
 ```
 
 
@@ -143,6 +147,8 @@ ggplot(data3comp, aes(x = `Nurse communication`, y = `Summary rating`)) +
   coord_fixed()
 
 # plot2 - correlation matrix heatmap from http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+
+library(ggcorrplot) #Jim: I loaded the ggcorrplot librbary to run the cormat object code 
 cordata <- data3comp[,c(2,3,4,5,6,7,8,9,12)]
 cormat <- round(cor(cordata),2)
 melted_cormat <- melt(cormat)
@@ -188,6 +194,8 @@ corplot <- ggplot(data = melted_cormat, aes(Var2, Var1, fill = value)) +
   
 corplot
 
+#Jim: Sophie had a similar plot like this, and I got to say, I'm so impressed with both of you guys. This ggcorrplot library is new to me, but it's awesome! Great use of color. Very easy to intrepret. 
+
 # reorder_cormat <- function(cormat){
 # # Use correlation between variables as distance
 # dd <- as.dist((1-cormat)/2)
@@ -212,3 +220,7 @@ corplot
 #  coord_fixed()
 # ggheatmap
 ```
+
+
+Jim Feedback:
+Hey Mike great job on your plots! I think you did a great job building in some variety of plots to use, especially with the use of the map plot! What stood out to me across all your plots was the work you did to get to the final product. I think each step was very well executed, and again, it was very helpful for me to get to view it. Great work!
