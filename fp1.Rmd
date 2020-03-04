@@ -111,6 +111,7 @@ mean_compare_plot <- ggplot(data2comp, aes(State, Rating)) +
   theme_minimal()
 
 mean_compare_plot
+# THuy: This plot is great. I would just suggest to add color to show direction of differences (subtracting one from the other and show whether that diff is negative or positive. Just like we did in homework 1)
 ```
 
 
@@ -187,6 +188,7 @@ corplot <- ggplot(data = melted_cormat, aes(Var2, Var1, fill = value)) +
                 title.position = "top", title.hjust = 0.5)) 
   
 corplot
+#Thuy: the corplot is nice! I like the idea that you use color divergence here. Just a minor note that later you may not want to the numbers in there :)
 
 # reorder_cormat <- function(cormat){
 # # Use correlation between variables as distance
