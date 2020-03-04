@@ -66,6 +66,7 @@ p <- ggplot(data = us_states_star,
             aes(x = long, y = lat,
                 group = group, fill = mean_rat))
 
+p
 # better plot
 state_map <- p + geom_polygon(color = "gray90", size = 0.1) +
   coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
@@ -111,6 +112,35 @@ mean_compare_plot <- ggplot(data2comp, aes(State, Rating)) +
   theme_minimal()
 
 mean_compare_plot
+
+#Akhila's Edits
+
+
+ggplot(data2comp, aes(State, Rating)) +
+  geom_line(aes(group = State), color = "gray40", size = .5) +
+  geom_point(aes(color = Question), size = 3) +
+  # coord_fixed(ratio = 1) + ##### doesn't work here because it's undone by coord_flip, and vice versa when I move it down.
+  coord_flip() +
+  labs(title = "Comparison of Mean State Hospital Star Ratings by Patients and CMS",
+       subtitle = "Scale: 1 to 5",
+       x = "", y = "Star Rating",
+       fill = "Rater",
+       caption = "Source: https://www.medicare.gov/hospitalcompare/search.html") +
+  scale_color_discrete(name = "Rater",
+                       breaks = c("mean_rat", "mean_rec"),
+                       labels = c("CMS", "Patient")) +
+  theme(
+    aspect.ratio = 1.5,
+    panel.background = element_rect(fill = "transparent",
+                                colour = "transparent",
+                                size = 0.5, linetype = "solid"),
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid',
+                                colour = "grey90"), 
+  panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                colour = "grey90")
+)
+
+
 ```
 
 
@@ -212,3 +242,21 @@ corplot
 #  coord_fixed()
 # ggheatmap
 ```
+
+Wow wow wow!! Thanks for sharing your code with, Mike! These are AMAZING drafts!
+Please see my comments below as per Daniel's guidelines.
+
+## Strengths
+1. Your plots overall are beautiful! I especially like how logically you've joined your data with the us_states data. This really helped my own anxiety about making maps!
+2. I also like the way you've created separate summarize tbls to use for your plots. I tend to confuse myself with using summarize and creating subsets with select() and mutate(). Your way is much simpler!
+3.Your line plot is an excellent way of showing the variance in CMS vs Patient star ratings. It is clear that there is a mismatch across most states.
+4. Your triangle correlation plot is fantastic!! It's very easy to understand and highly intuitive. Really awesome job!
+
+## What I learned
+1. From your corplot, I learned that we could fill by value and not just by color. So useful!
+
+## Suggestions
+1. My suggestion is regarding your lineplot of star ratings. The aspect ratio combined with the number of states on the plot makes it difficult to compare states with each other. My intial suggestion was to adjust the aspect ratio -- I've included some draft code above. I learned that you can't use "coord_fixed" with "coord_flip" because they will just undo each other. Also, it seems I can't specify the aspect ratio within "theme_minimal" so I attempted to recreate the minimal theme manually. After all this, I'm not sure how helpful modifying the aspect ratio really is...
+2. Another suggestion is regarding the colorscale of your corplot. Though very bright, the colors may not be accessible to all - especially in differentiating between the variations of orange. Perhaps a sequential palette from colorbrewer.org would help!
+
+
